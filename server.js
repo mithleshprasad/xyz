@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://xyz-0576.onrender.com',
   credentials: true
 }));
 
