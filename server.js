@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://xyz-0576.onrender.com',
+  origin: 'https://thunderous-dragon-a6e31d.netlify.app',
   credentials: true
 }));
 
