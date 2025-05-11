@@ -23,12 +23,10 @@ app.use(session({
 }));
 
 // Database connection
-mongoose.connect('mongodb+srv://technomithlesh123:NDFkj7UdCYomTMai@cluster0.xeetirp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
 const authRoutes = require('./routes/auth');
