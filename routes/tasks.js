@@ -11,12 +11,16 @@ const requireAuth = (req, res, next) => {
 };
 
 // Get all tasks for a board
-router.get('/:boardId', requireAuth, async (req, res) => {
+router.get('/:boardId', async (req, res) => {
   try {
+    const { boardId } = req.params;
+    const { userId } = req.query; 
+    
     const tasks = await Task.find({ 
-      boardId: req.params.boardId,
-      userId: req.session.userId
+      boardId,
+      userId 
     });
+    
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
@@ -24,15 +28,15 @@ router.get('/:boardId', requireAuth, async (req, res) => {
 });
 
 // Create new task
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { title, description, status, boardId } = req.body;
+    const { title, description, status, boardId ,userId } = req.body;
     const task = new Task({
       title,
       description,
       status,
       boardId,
-      userId: req.session.userId
+      userId: userId
     });
     await task.save();
     res.status(201).json(task);
@@ -41,12 +45,13 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// Update task status
-router.put('/:id/status', requireAuth, async (req, res) => {
+
+router.put('/:id/status', async (req, res) => {
+  console.log(req.body)
   try {
-    const { status } = req.body;
+    const { status,userId } = req.body;
     const task = await Task.findOneAndUpdate(
-      { _id: req.params.id, userId: req.session.userId },
+      { _id: req.params.id, userId },
       { status, updatedAt: Date.now() },
       { new: true }
     );
@@ -58,12 +63,12 @@ router.put('/:id/status', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Server error', error });
   }
 });
-// Update task (full update)
-router.put('/:id', requireAuth, async (req, res) => {
+
+router.put('/:id', async (req, res) => {
   try {
-    const { title, description, status } = req.body;
+    const { title, description, status,userId } = req.body;
     const task = await Task.findOneAndUpdate(
-      { _id: req.params.id, userId: req.session.userId },
+      { _id: req.params.id, userId },
       { title, description, status, updatedAt: Date.now() },
       { new: true }
     );
@@ -75,7 +80,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Server error', error });
   }
 });
-// Delete task
+
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const task = await Task.findOneAndDelete({
