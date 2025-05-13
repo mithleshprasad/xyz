@@ -2,18 +2,11 @@ const express = require('express');
 const router = express.Router();
 const Board = require('../models/Board');
 
-// Middleware to check if user is logged in
-const requireAuth = (req, res, next) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-  next();
-};
-
 // Get all boards for user
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', async (req, res) => {
+  const { userId } = req.query; // Changed from req.body to req.query for GET request
   try {
-    const boards = await Board.find({ userId: req.session.userId });
+    const boards = await Board.find({ userId });
     res.json(boards);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
@@ -21,12 +14,12 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // Create new board
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { title } = req.body;
+    const { title, userId } = req.body;
     const board = new Board({
       title,
-      userId: req.session.userId
+      userId
     });
     await board.save();
     res.status(201).json(board);
