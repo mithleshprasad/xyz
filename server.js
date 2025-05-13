@@ -10,10 +10,30 @@ app.use(express.urlencoded({ extended: true }));
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors({
-  origin: '*',
-  credentials: true
-}));
+// CORS configuration for your Netlify frontend
+const allowedOrigins = [
+  'https://thunderous-dragon-a6e31d.netlify.app',
+  'http://localhost:3000' // for local development
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  exposedHeaders: ['Set-Cookie']
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 app.use(session({
   secret: 'your-secret-key',
