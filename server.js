@@ -1,62 +1,81 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const bodyParser = require('body-parser');
 const cors = require('cors');
-const path = require('path');
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Middleware
-app.use(bodyParser.json());
-// CORS configuration for your Netlify frontend
-const allowedOrigins = [
-  'https://thunderous-dragon-a6e31d.netlify.app',
-  'http://localhost:3000' // for local development
-];
+// Enhanced error handling for uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
 
+// Database connection with error handling
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
+});
+
+// CORS configuration
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: [
+    'https://thunderous-dragon-a6e31d.netlify.app',
+    'http://localhost:3000'
+  ],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  exposedHeaders: ['Set-Cookie']
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
 
-// Handle preflight requests
-app.options('*', cors(corsOptions));
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Session configuration
 app.use(session({
-  secret: 'your-secret-key',
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Set secure: true in production with HTTPS
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+// Route validation middleware
+app.use((req, res, next) => {
+  // Check for malformed URLs that might trigger path-to-regexp errors
+  if (req.url.includes('//') || req.url.includes(':/') || req.url.includes('::')) {
+    return res.status(400).json({ error: 'Invalid URL format' });
+  }
+  next();
+});
 
-// Routes
-const authRoutes = require('./routes/auth');
-const boardRoutes = require('./routes/boards');
-const taskRoutes = require('./routes/tasks');
+// Import routes with error handling
+try {
+  app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/boards', require('./routes/boards'));
+  app.use('/api/tasks', require('./routes/tasks'));
+} catch (err) {
+  console.error('Route loading error:', err);
+  process.exit(1);
+}
 
-app.use('/api/auth', authRoutes);
-app.use('/api/boards', boardRoutes);
-app.use('/api/tasks', taskRoutes);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
