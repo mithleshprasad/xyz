@@ -36,6 +36,8 @@ router.post('/', async (req, res) => {
       description,
       status,
       boardId,
+      dueDate,
+      priority,
       userId: userId
     });
     await task.save();
