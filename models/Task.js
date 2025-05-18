@@ -13,6 +13,15 @@ const TaskSchema = new mongoose.Schema({
     enum: ['todo', 'in-progress', 'done'],
     default: 'todo'
   },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high'],
+    default: 'medium'
+  },
+  dueDate: {
+    type: Date
+    
+  },
   boardId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Board',
