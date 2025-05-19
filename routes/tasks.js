@@ -54,7 +54,7 @@ router.put('/:id/status', async (req, res) => {
   try {
     const { status,userId } = req.body;
     const task = await Task.findOneAndUpdate(
-      { _id: req.params.id, userId },
+      { _id: req.params.id},
       { status, updatedAt: Date.now() },
       { new: true }
     );
